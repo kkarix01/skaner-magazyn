@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+
+  <title>Skanuj kod</title>
+
+  <!-- Biblioteka do skanowania kodów kreskowych -->
+  <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100%;
+      background: #0b1220;
+      color: #fff;
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    }
+
+    body {
+      min-height: 100dvh;
+      display: flex;
+      justify-content: center;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 480px;
+      min-height: 100dvh;
+      background: #f4f6f8;
+      color: #17202a;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* =========================
+       NAGŁÓWEK
+       ========================= */
+
+    header {
+      background: #044cab;
+      color: white;
+
+      padding:
+        calc(18px + env(safe-area-inset-top))
+        18px
+        18px;
+
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0;
+
+      font-size: 22px;
+      line-height: 1.2;
+      font-weight: 700;
+    }
+
+    header p {
+      margin: 7px 0 0;
+
+      opacity: .9;
+
+      font-size: 14px;
+      line-height: 1.3;
+    }
+
+
+    /* =========================
+       GŁÓWNA CZĘŚĆ
+       ========================= */
+
+    main {
+      padding: 18px;
+
+      flex: 1;
+
+      display: flex;
+      flex-direction: column;
+    }
+
+
+    /* =========================
+       OKNO APARATU
+       ========================= */
+
+    .scanner-card {
+      width: 100%;
+
+      background: #111827;
+
+      border-radius: 18px;
+
+      overflow: hidden;
+
+      box-shadow:
+        0 8px 30px rgba(0, 0, 0, .18);
+    }
+
+    #reader {
+      width: 100%;
+      min-height: 360px;
+    }
+
+
+    /*
+      Ukrywamy domyślne elementy
+      interfejsu html5-qrcode.
+    */
+
+    #reader__dashboard,
+    #reader__dashboard_section_csr,
+    #reader__dashboard_section_swaplink {
+      display: none !important;
+    }
+
+
+    #reader video {
+      width: 100% !important;
+      height: auto !important;
+
+      display: block;
+
+      object-fit: cover;
+    }
+
+
+    /* =========================
+       RAMKA SKANOWANIA
+       ========================= */
+
+    .scan-overlay {
+      position: absolute;
+
+      left: 50%;
+      top: 50%;
+
+      width: 82%;
+      max-width: 360px;
+
+      height: 110px;
+
+      transform: translate(-50%, -50%);
+
+      border:
+        3px solid rgba(255, 255, 255, .9);
+
+      border-radius: 14px;
+
+      pointer-events: none;
+
+      box-shadow:
+        0 0 0 9999px rgba(0, 0, 0, .18);
+    }
+
+
+    /* =========================
+       STATUS
+       ========================= */
+
+    .status {
+      margin-top: 16px;
+
+      padding: 14px 16px;
+
+      border-radius: 12px;
+
+      background: white;
+
+      text-align: center;
+
+      font-size: 15px;
+
+      line-height: 1.4;
+    }
+
+    .status.error {
+      background: #fff0f0;
+      color: #a40000;
+    }
+
+    .status.success {
+      background: #eaf8ee;
+      color: #146b2e;
+    }
+
+
+    /* =========================
+       ODCZYTANY KOD
+       ========================= */
+
+    .result {
+      margin-top: 14px;
+
+      padding: 18px 16px;
+
+      border-radius: 14px;
+
+      background: #eaf8ee;
+
+      color: #146b2e;
+
+      text-align: center;
+    }
+
+    .result-title {
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    .code {
+      margin-top: 7px;
+
+      font-size: 27px;
+
+      font-weight: 800;
+
+      letter-spacing: 1px;
+
+      word-break: break-all;
+    }
+
+
+    /* =========================
+       PRZYCISKI
+       ========================= */
+
+    button {
+      width: 100%;
+
+      border: 0;
+
+      border-radius: 14px;
+
+      padding: 16px;
+
+      margin-top: 14px;
+
+      font-size: 17px;
+
+      font-weight: 700;
+
+      cursor: pointer;
+
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:active {
+      transform: scale(.98);
+    }
+
+
+    #retryButton {
+      background: #044cab;
+
+      color: white;
+
+      display: none;
+    }
+
+
+    #closeButton {
+      background: #e7ebf0;
+
+      color: #17202a;
+    }
+
+
+    /* =========================
+       INFORMACJA
+       ========================= */
+
+    .hint {
+      margin-top: 14px;
+
+      padding-bottom:
+        calc(4px + env(safe-area-inset-bottom));
+
+      color: #66727e;
+
+      font-size: 13px;
+
+      line-height: 1.45;
+
+      text-align: center;
+    }
+
+
+    /* =========================
+       KONTENER APARATU
+       ========================= */
+
+    .camera-container {
+      position: relative;
+      width: 100%;
+    }
+  </style>
+</head>
+
+
+<body>
+
+  <div class="app">
+
+    <!-- =========================
+         NAGŁÓWEK
+         ========================= -->
+
+    <header>
+
+      <h1>📷 Skanuj kod</h1>
+
+      <p>
+        Skieruj aparat na kod kreskowy
+      </p>
+
+    </header>
+
+
+    <!-- =========================
+         GŁÓWNA CZĘŚĆ
+         ========================= -->
+
+    <main>
+
+      <div class="scanner-card">
+
+        <div class="camera-container">
+
+          <div id="reader"></div>
+
+          <!-- Własna ramka pomocnicza -->
+          <div
+            id="scanOverlay"
+            class="scan-overlay"
+          ></div>
+
+        </div>
+
+      </div>
+
+
+      <!-- =========================
+           STATUS
+           ========================= -->
+
+      <div
+        id="status"
+        class="status"
+      >
+        Uruchamiam aparat…
+      </div>
+
+
+      <!-- =========================
+           WYNIK
+           ========================= -->
+
+      <div
+        id="result"
+        class="result"
+        style="display:none;"
+      >
+
+        <div class="result-title">
+          Kod odczytany ✓
+        </div>
+
+        <div
+          id="code"
+          class="code"
+        ></div>
+
+      </div>
+
+
+      <!-- =========================
+           PRZYCISK PONOWNEGO SKANOWANIA
+           ========================= -->
+
+      <button
+        id="retryButton"
+        type="button"
+      >
+        🔄 Skanuj ponownie
+      </button>
+
+
+      <!-- =========================
+           ZAMKNIĘCIE
+           ========================= -->
+
+      <button
+        id="closeButton"
+        type="button"
+      >
+        Zamknij skaner
+      </button>
+
+
+      <!-- =========================
+           INFORMACJA
+           ========================= -->
+
+      <div class="hint">
+
+        Skaner obsługuje kody EAN-13.
+
+        Po odczytaniu kod zostanie
+        automatycznie przekazany
+        do aplikacji magazynowej.
+
+      </div>
+
+    </main>
+
+  </div>
+
+
+  <script>
+
+    /* =====================================================
+       ELEMENTY INTERFEJSU
+       ===================================================== */
+
+    const statusEl =
+      document.getElementById('status');
+
+    const resultEl =
+      document.getElementById('result');
+
+    const codeEl =
+      document.getElementById('code');
+
+    const retryButton =
+      document.getElementById('retryButton');
+
+    const closeButton =
+      document.getElementById('closeButton');
+
+    const scanOverlay =
+      document.getElementById('scanOverlay');
+
+
+    /* =====================================================
+       ZMIENNE
+       ===================================================== */
+
+    let scanner = null;
+
+    let scanning = false;
+
+    let lastCode = null;
+
+    let scanSent = false;
+
+
+    /* =====================================================
+       STATUS
+       ===================================================== */
+
+    function setStatus(text, type = '') {
+
+      statusEl.textContent = text;
+
+      statusEl.className =
+        'status' +
+        (type ? ' ' + type : '');
+
+    }
+
+
+    /* =====================================================
+       ZATRZYMANIE SKANERA
+       ===================================================== */
+
+    async function stopScanner() {
+
+      if (!scanner || !scanning) {
+        return;
+      }
+
+      try {
+
+        await scanner.stop();
+
+      } catch (error) {
+
+        console.warn(
+          'Nie udało się zatrzymać skanera:',
+          error
+        );
+
+      }
+
+      scanning = false;
+
+    }
+
+
+    /* =====================================================
+       URUCHOMIENIE SKANERA
+       ===================================================== */
+
+    async function startScanner() {
+
+      await stopScanner();
+
+
+      /* Reset */
+
+      resultEl.style.display = 'none';
+
+      retryButton.style.display = 'none';
+
+      scanOverlay.style.display = 'block';
+
+      lastCode = null;
+
+      scanSent = false;
+
+
+      setStatus(
+        'Uruchamiam aparat…'
+      );
+
+
+      /* Tworzymy skaner */
+
+      scanner = new Html5Qrcode(
+        'reader',
+        {
+          formatsToSupport: [
+            Html5QrcodeSupportedFormats.EAN_13
+          ]
+        }
+      );
+
+
+      const config = {
+
+        fps: 10,
+
+
+        qrbox: function(
+          viewfinderWidth,
+          viewfinderHeight
+        ) {
+
+          const width =
+            Math.min(
+              Math.floor(
+                viewfinderWidth * 0.82
+              ),
+              360
+            );
+
+
+          const height =
+            Math.min(
+              Math.floor(
+                viewfinderHeight * 0.32
+              ),
+              140
+            );
+
+
+          return {
+            width: width,
+            height: height
+          };
+
+        },
+
+
+        aspectRatio: 1.7777778
+
+      };
+
+
+      try {
+
+        await scanner.start(
+
+          {
+            facingMode: 'environment'
+          },
+
+          config,
+
+          handleSuccess,
+
+          function() {
+            /*
+              Brak odczytu w pojedynczej
+              klatce — ignorujemy.
+            */
+          }
+
+        );
+
+
+        scanning = true;
+
+
+        setStatus(
+          'Gotowe — skieruj aparat na kod EAN.'
+        );
+
+
+      } catch (error) {
+
+        console.error(error);
+
+
+        scanning = false;
+
+
+        setStatus(
+          'Nie udało się uruchomić aparatu. ' +
+          'Sprawdź zgodę na aparat i użyj strony HTTPS.',
+          'error'
+        );
+
+
+        scanOverlay.style.display = 'none';
+
+        retryButton.style.display = 'block';
+
+      }
+
+    }
+
+
+    /* =====================================================
+       OBSŁUGA POPRAWNEGO ODCZYTU
+       ===================================================== */
+
+    async function handleSuccess(decodedText) {
+
+      if (!decodedText) {
+        return;
+      }
+
+
+      const barcode =
+        String(decodedText).trim();
+
+
+      if (!barcode) {
+        return;
+      }
+
+
+      /*
+        Zapobiegamy wielokrotnemu
+        odczytaniu tego samego kodu.
+      */
+
+      if (barcode === lastCode) {
+        return;
+      }
+
+
+      if (scanSent) {
+        return;
+      }
+
+
+      lastCode = barcode;
+
+      scanSent = true;
+
+
+      /* Zatrzymujemy aparat */
+
+      await stopScanner();
+
+
+      scanOverlay.style.display = 'none';
+
+
+      /* Pokazujemy wynik */
+
+      codeEl.textContent = barcode;
+
+      resultEl.style.display = 'block';
+
+
+      setStatus(
+        'Kod odczytany ✓',
+        'success'
+      );
+
+
+      /*
+        ============================================
+        PRZEKAZANIE KODU DO APLIKACJI
+        ============================================
+
+        Aplikacja magazynowa będzie nasłuchiwała:
+
+        window.addEventListener('message', ...)
+
+        i otrzyma:
+
+        {
+          type: 'barcode',
+          code: '5902841713697'
+        }
+      */
+
+      if (
+        window.opener &&
+        !window.opener.closed
+      ) {
+
+        try {
+
+          window.opener.postMessage(
+
+            {
+              type: 'barcode',
+
+              code: barcode
+
+            },
+
+            '*'
+
+          );
+
+        } catch (error) {
+
+          console.error(
+            'Nie udało się przekazać kodu:',
+            error
+          );
+
+        }
+
+
+        /*
+          Dajemy użytkownikowi chwilę
+          na zobaczenie potwierdzenia,
+          a następnie zamykamy skaner.
+        */
+
+        setTimeout(() => {
+
+          try {
+
+            window.close();
+
+          } catch (error) {
+
+            console.warn(
+              'Nie udało się zamknąć okna:',
+              error
+            );
+
+          }
+
+        }, 700);
+
+
+      } else {
+
+        /*
+          Skaner został otwarty
+          samodzielnie.
+
+          W takim przypadku nie mamy
+          okna nadrzędnego, więc zostawiamy
+          wynik na ekranie.
+        */
+
+        setStatus(
+          'Kod odczytany. Możesz zamknąć skaner.',
+          'success'
+        );
+
+      }
+
+    }
+
+
+    /* =====================================================
+       SKANUJ PONOWNIE
+       ===================================================== */
+
+    retryButton.addEventListener(
+      'click',
+      () => {
+
+        startScanner();
+
+      }
+    );
+
+
+    /* =====================================================
+       ZAMKNIJ SKANER
+       ===================================================== */
+
+    closeButton.addEventListener(
+      'click',
+      async () => {
+
+        await stopScanner();
+
+
+        if (
+          window.opener &&
+          !window.opener.closed
+        ) {
+
+          try {
+
+            window.close();
+
+          } catch (error) {
+
+            console.warn(error);
+
+          }
+
+        } else {
+
+          history.back();
+
+        }
+
+      }
+    );
+
+
+    /* =====================================================
+       START
+       ===================================================== */
+
+    startScanner();
+
+  </script>
+
+</body>
+</html>
